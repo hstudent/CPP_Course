@@ -12,7 +12,14 @@
 #include <signal.h>
 #include <string.h>
 
+#include <tbb/parallel_for.h>
+#include <tbb/task_scheduler_init.h>
+#include <tbb/parallel_invoke.h>
+#include <tbb/compat/thread>
+
 using namespace std;
+
+bool bGlobalExit = false;
 
 #define MAX_ARG	1024
 #define SERVER "Server: Dynamic Thread\n"
@@ -180,6 +187,18 @@ void proc_exit(int param)
 		}
 }
 
+
+bool MyThread(int something)
+{
+	while (true)
+	{
+		if (bGlobalExit)
+			break;
+		sleep(1);
+	}
+    return true;
+}
+
 int deamoncode()
 {
 	// create server socket
@@ -217,6 +236,12 @@ int deamoncode()
 
 	sigignore(SIGINT);
 	signal (SIGCHLD, proc_exit);
+
+	tbb::tbb_thread pMyThread1(MyThread, 1);
+	tbb::tbb_thread pMyThread2(MyThread, 2);
+	tbb::tbb_thread pMyThread3(MyThread, 3);
+	tbb::tbb_thread pMyThread4(MyThread, 4);
+	tbb::tbb_thread pMyThread5(MyThread, 5);
 
 	while (1)
 	{
